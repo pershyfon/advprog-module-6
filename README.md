@@ -9,3 +9,9 @@ Saya me-refactor method `handle_connection` dengan conditional. Jika request kli
 ![img.png](assets/images/img2.png)
 ### Commit 4: slow request
 Modifikasi pada method `handle_connection` ini membuat pembacaan baris HTTP Request menggunakan pola match untuk memeriksa jenis request. Jika request cocok dengan `GET / sleep HTTP/1.1` menunjukkan request untuk tidur selama 10 detik menggunakan `thread::sleep(Duration::from_secs(10))`. Setelah tidur 10 detik, status_line menjadi `HTTP/1.1 200 OK` dan mengembalikan `hello.html`. Untuk request jenis lain, masih sama seperti sebelumnya.
+### Commit 5: threadpool
+Cara kerja `ThreadPool`:
+1. `ThreadPool` diinisialisasi dengan ukuran jumlah thread yang bekerja dalam pool. Saluran `mpsc::channel` akan menjadi komunikasi antara thread utama (yang mengirimkan pekerjaan) dan thread pekerja pada vektor. Untuk setiap pekerja, dibuat struktur Worker baru yang meneruskan ID dan clone dari ujung penerima saluran.
+2. Setiap thread pekerja dibuat dengan sebuah penutup yang berjalan dalam loop tak terbatas. Di dalam loop, pekerja menunggu pekerjaan dikirimkan oleh thread utama melalui saluran dan ketika mendapat pekerjaan akan dieksekusi.
+3. `Arc<Mutex<mpsc::Receiver<Job>>>` pada semua thread pekerja memungkinkan beberapa thread mengakses ujung penerima saluran dengan aman. `Mutex` memastikan bahwa hanya satu thread pekerja yang mendapat sebuah pekerjaan dalam satu waktu. Saluran `mpsc` memungkinkan beberapa thread untuk mengirimkan pekerjaan secara bersamaan sambil tetap memastikan bahwa setiap pekerjaan hanya diproses oleh 1 thread pekerja
+4. Hal ini untuk memungkinkan berjalannya multi-threaded tanpa menghadapi isu concurrency
